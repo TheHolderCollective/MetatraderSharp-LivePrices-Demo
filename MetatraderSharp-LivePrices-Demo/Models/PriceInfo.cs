@@ -1,6 +1,6 @@
 ﻿using MetatraderSharp.MTsocketAPI.Responses.Common;
 
-namespace LivePrices.SharedData;
+namespace LivePrices.Models;
 
 public class PriceInfo
 {
