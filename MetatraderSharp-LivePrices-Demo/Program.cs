@@ -1,4 +1,4 @@
-namespace MetatraderSharp_LivePrices_Demo
+namespace LivePrices
 {
     internal static class Program
     {
@@ -11,7 +11,7 @@ namespace MetatraderSharp_LivePrices_Demo
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new Form1());
+            Application.Run(new LivePrices());
         }
     }
 }
