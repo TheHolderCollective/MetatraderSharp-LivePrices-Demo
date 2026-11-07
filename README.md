@@ -12,4 +12,4 @@ Successful usage of the MetatraderSharp-LivePrices demo requires:
 For more information on how to install the MTsocketAPI please consult: https://www.mtsocketapi.com/
 
 ## Disclaimer
-This is a sample application and is provided as is. It is not intended to be used as a support for live trading.
+This is a sample application created to demonstrate price tracking functionality and is provided as is. It is not intended to be used as a support for live trading.
