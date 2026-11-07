@@ -68,9 +68,9 @@
             label11 = new Label();
             label31 = new Label();
             label32 = new Label();
-            button1 = new Button();
-            button2 = new Button();
-            button3 = new Button();
+            btn_StartTracking = new Button();
+            btn_StopTracking = new Button();
+            btn_ResetClient = new Button();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             groupBox3.SuspendLayout();
@@ -240,9 +240,9 @@
             lbl_gb1_Symbol.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
             lbl_gb1_Symbol.Location = new Point(114, 48);
             lbl_gb1_Symbol.Name = "lbl_gb1_Symbol";
-            lbl_gb1_Symbol.Size = new Size(87, 25);
+            lbl_gb1_Symbol.Size = new Size(60, 25);
             lbl_gb1_Symbol.TabIndex = 0;
-            lbl_gb1_Symbol.Text = "EURUSD";
+            lbl_gb1_Symbol.Text = "------";
             // 
             // label13
             // 
@@ -453,9 +453,9 @@
             lbl_gb2_Symbol.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
             lbl_gb2_Symbol.Location = new Point(114, 48);
             lbl_gb2_Symbol.Name = "lbl_gb2_Symbol";
-            lbl_gb2_Symbol.Size = new Size(87, 25);
+            lbl_gb2_Symbol.Size = new Size(60, 25);
             lbl_gb2_Symbol.TabIndex = 0;
-            lbl_gb2_Symbol.Text = "EURUSD";
+            lbl_gb2_Symbol.Text = "------";
             // 
             // label29
             // 
@@ -503,44 +503,44 @@
             label32.TabIndex = 0;
             label32.Text = "Symbol:";
             // 
-            // button1
+            // btn_StartTracking
             // 
-            button1.Location = new Point(25, 282);
-            button1.Name = "button1";
-            button1.Size = new Size(493, 64);
-            button1.TabIndex = 1;
-            button1.Text = "Start Tracking";
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
+            btn_StartTracking.Location = new Point(25, 282);
+            btn_StartTracking.Name = "btn_StartTracking";
+            btn_StartTracking.Size = new Size(493, 64);
+            btn_StartTracking.TabIndex = 1;
+            btn_StartTracking.Text = "Start Tracking";
+            btn_StartTracking.UseVisualStyleBackColor = true;
+            btn_StartTracking.Click += button1_Click;
             // 
-            // button2
+            // btn_StopTracking
             // 
-            button2.Location = new Point(25, 359);
-            button2.Name = "button2";
-            button2.Size = new Size(493, 64);
-            button2.TabIndex = 1;
-            button2.Text = "Stop Tracking";
-            button2.UseVisualStyleBackColor = true;
-            button2.Click += button2_Click;
+            btn_StopTracking.Location = new Point(25, 359);
+            btn_StopTracking.Name = "btn_StopTracking";
+            btn_StopTracking.Size = new Size(493, 64);
+            btn_StopTracking.TabIndex = 1;
+            btn_StopTracking.Text = "Stop Tracking";
+            btn_StopTracking.UseVisualStyleBackColor = true;
+            btn_StopTracking.Click += button2_Click;
             // 
-            // button3
+            // btn_ResetClient
             // 
-            button3.Location = new Point(25, 436);
-            button3.Name = "button3";
-            button3.Size = new Size(493, 64);
-            button3.TabIndex = 1;
-            button3.Text = "Reset Client";
-            button3.UseVisualStyleBackColor = true;
-            button3.Click += button3_Click;
+            btn_ResetClient.Location = new Point(25, 436);
+            btn_ResetClient.Name = "btn_ResetClient";
+            btn_ResetClient.Size = new Size(493, 64);
+            btn_ResetClient.TabIndex = 1;
+            btn_ResetClient.Text = "Reset Client";
+            btn_ResetClient.UseVisualStyleBackColor = true;
+            btn_ResetClient.Click += button3_Click;
             // 
             // LivePrices
             // 
             AutoScaleDimensions = new SizeF(11F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(542, 511);
-            Controls.Add(button3);
-            Controls.Add(button2);
-            Controls.Add(button1);
+            Controls.Add(btn_ResetClient);
+            Controls.Add(btn_StopTracking);
+            Controls.Add(btn_StartTracking);
             Controls.Add(groupBox4);
             Controls.Add(groupBox3);
             Controls.Add(groupBox2);
@@ -601,9 +601,9 @@
         private Label label30;
         private Label label31;
         private Label label32;
-        private Button button1;
-        private Button button2;
-        private Button button3;
+        private Button btn_StartTracking;
+        private Button btn_StopTracking;
+        private Button btn_ResetClient;
         private Label lbl_gb1_Spread;
         private Label label9;
         private Label lbl_gb2_Spread;

@@ -1,9 +1,10 @@
-using LivePrices.SharedData;
 using LivePrices.Models;
+using LivePrices.SharedData;
 using MetatraderSharp;
 using MetatraderSharp.Extensions;
 using MetatraderSharp.MetatraderClient;
 using MetatraderSharp.MTsocketAPI.Responses.Common;
+using System.Globalization;
 using System.Net.WebSockets;
 
 namespace LivePrices;
@@ -22,19 +23,20 @@ public partial class LivePrices : Form
     private BlockingQueue<PriceInfo> _filterOuputPipe;
     private ClientWebSocket _webSocket;
 
-    private static string[] _symbols = { "EURCHF", "AUDUSD" };
+    private static string[] _symbols = { "", "" };
 
     public LivePrices()
     {
         InitializeComponent();
 
-        lbl_gb1_Symbol.Text = _symbols[0];
-        lbl_gb2_Symbol.Text = _symbols[1];
-
         _mtClient = new();
         _webSocket = new ClientWebSocket();
         _producerOutputPipe = new();
         _filterOuputPipe = new();
+
+        if (!CultureInfo.CurrentCulture.Name.Equals("en-US"))
+            CultureInfo.CurrentCulture = new CultureInfo("en-US");
+
     }
 
     private async void LivePrices_FormClosing(object sender, FormClosingEventArgs e)
@@ -64,7 +66,7 @@ public partial class LivePrices : Form
 
         if (_mtClient.ClientStatusIsError())
         {
-            outputMessage = "Client is in error state. Unable to start tracking.";
+            outputMessage = "Unable to start tracking. Please check that terminal is running and MTsocketAPI is loaded.";
         }
         else if (_mtClient.ClientStatusIsOK() && _trackingStarted)
         {
@@ -72,7 +74,36 @@ public partial class LivePrices : Form
         }
         else if (_mtClient.ClientStatusIsOK() && !_trackingStarted)
         {
-            outputMessage = await StartTrackingPrices();
+            SymbolList symbols = await _mtClient.GetSymbolListAsync();
+
+            if (symbols.ErrorID == 0)
+            {
+                var symbolSelectForm = new SymbolSelectForm(symbols.GetSymbolNames());
+                symbolSelectForm.ShowDialog();
+
+                if (symbolSelectForm.OkClicked)
+                {
+                    if (symbolSelectForm.Symbol1 is not null && symbolSelectForm.Symbol2 is not null)
+                    {
+                        _symbols[0] = symbolSelectForm.Symbol1;
+                        _symbols[1] = symbolSelectForm.Symbol2;
+
+                        outputMessage = await StartTrackingPrices(_symbols);
+                    }
+                    else
+                    {
+                        outputMessage = "Invalid symbol selections.Unable to start tracking.";
+                    }
+                }
+                else if (symbolSelectForm.CancelClicked)
+                {
+                    outputMessage = "Start tracking cancelled.";
+                }
+            }
+            else
+            {
+                outputMessage = "Unable to start tracking. Symbol loading from client failed.";
+            }
         }
 
         MessageBox.Show(outputMessage, this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -118,11 +149,11 @@ public partial class LivePrices : Form
         MessageBox.Show(outputMessage, this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
-    private async Task<string> StartTrackingPrices()
+    private async Task<string> StartTrackingPrices(string[] symbols)
     {
         string outputMessage = string.Empty;
 
-        _trackResponse = await _mtClient.TrackPricesAsync(TrackingCommand.Start, _symbols);
+        _trackResponse = await _mtClient.TrackPricesAsync(TrackingCommand.Start, symbols);
 
         if (_trackResponse.SuccessCount() == _symbols.Length && _trackResponse.ErrorID == 0)
         {
@@ -183,9 +214,11 @@ public partial class LivePrices : Form
         return outputMessage;
     }
 
-    // Generalize to remove code duplication
     private void OutputToTextBoxes(PriceInfo output)
     {
+        lbl_gb1_Symbol.Text = _symbols[0];
+        lbl_gb2_Symbol.Text = _symbols[1];
+
         if (output.Symbol == _symbols[0])
         {
             string specifier = GetFormatSpecifier(_symbols[0]);
@@ -206,16 +239,24 @@ public partial class LivePrices : Form
         }
     }
 
+    // not exhaustive/accurate for all symbols 
     private static string GetFormatSpecifier(string symbol)
     {
         if (symbol.Contains("JPY"))
         {
             return "N3";
         }
+        else if (symbol.Contains("BTC-JPY"))
+        {
+            return "N1";
+        }
+        else if (symbol.Contains("BTCUSD"))
+        {
+            return "N2";
+        }
         else
         {
             return "N5";
         }
     }
-
 }

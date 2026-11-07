@@ -21,7 +21,7 @@ public class PriceInfo
 
     public PriceInfo(TrackPrices trackPrices)
     {
-        Symbol = trackPrices.Symbol ?? "Unknown";
+        Symbol = trackPrices.Symbol ?? "------";
         Ask = trackPrices.Ask;
         Bid = trackPrices.Bid;
         Volume = trackPrices.Volume;
@@ -33,11 +33,20 @@ public class PriceInfo
         return $"Symbol: {Symbol} Ask: {Ask:N5} Bid: {Bid:N5} Volume: {Volume:N0} Spread: {Spread}";
     }
 
+    // not exhaustive/accurate for all symbols 
     private static double GetSpreadFactor(string symbol)
     {
         if (symbol.Contains("JPY"))
         {
             return 1000;
+        }
+        else if (symbol.Contains("BTCUSD"))
+        {
+            return 100;
+        }
+        else if (symbol.Contains("BTC-JPY"))
+        {
+            return 1 / 1000;
         }
         else
         {
