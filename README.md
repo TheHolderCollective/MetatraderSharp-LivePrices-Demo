@@ -6,7 +6,7 @@ A demo WinForms app showing how the MetatraderSharp API can be used to stream li
 
 ## Usage Requirements
 Successful usage of the MetatraderSharp-LivePrices demo requires:
-- a copy of Metatrader 4/Metratrader 5 to be installed 
+- a copy of MetaTrader 4/MetaTrader 5 to be installed 
 - MTsocketAPI should be installed and then loaded onto a chart in the terminal with the default port settings unchanged
 
 For more information on how to install the MTsocketAPI please consult: https://www.mtsocketapi.com/
