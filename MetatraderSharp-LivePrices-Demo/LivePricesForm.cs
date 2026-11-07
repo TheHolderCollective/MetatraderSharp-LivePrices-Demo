@@ -13,30 +13,28 @@ public partial class LivePrices : Form
 {
     private MT4Client _mtClient;
     private TrackResponse _trackResponse;
-    private bool _trackingStarted;
-
     private PriceProducer _priceProducer;
     private PriceFilter _priceFilter;
     private PriceConsumer<PriceInfo> _priceConsumer;
-
     private BlockingQueue<TrackPrices> _producerOutputPipe;
     private BlockingQueue<PriceInfo> _filterOuputPipe;
     private ClientWebSocket _webSocket;
-
-    private static string[] _symbols = { "", "" };
+    private bool _trackingStarted;
+    private string[] _symbols;
 
     public LivePrices()
     {
+        if (!CultureInfo.CurrentCulture.Name.Equals("en-US"))
+            CultureInfo.CurrentCulture = new CultureInfo("en-US");
+
         InitializeComponent();
+        SetLabelsToDefaults();
 
         _mtClient = new();
         _webSocket = new ClientWebSocket();
         _producerOutputPipe = new();
         _filterOuputPipe = new();
-
-        if (!CultureInfo.CurrentCulture.Name.Equals("en-US"))
-            CultureInfo.CurrentCulture = new CultureInfo("en-US");
-
+        _symbols = new string[2];
     }
 
     private async void LivePrices_FormClosing(object sender, FormClosingEventArgs e)
@@ -164,7 +162,7 @@ public partial class LivePrices : Form
             {
                 _priceProducer = new(_producerOutputPipe, _webSocket);
                 _priceFilter = new(_producerOutputPipe, _filterOuputPipe);
-                _priceConsumer = new(_filterOuputPipe, OutputToTextBoxes);
+                _priceConsumer = new(_filterOuputPipe, OutputToLabels);
 
                 _priceProducer.Start();
                 _priceFilter.Start();
@@ -211,18 +209,17 @@ public partial class LivePrices : Form
             outputMessage = $"An error occured: {_trackResponse.ErrorDescription}";
         }
 
+        SetLabelsToDefaults();
         return outputMessage;
     }
 
-    private void OutputToTextBoxes(PriceInfo output)
+    private void OutputToLabels(PriceInfo output)
     {
-        lbl_gb1_Symbol.Text = _symbols[0];
-        lbl_gb2_Symbol.Text = _symbols[1];
-
         if (output.Symbol == _symbols[0])
         {
             string specifier = GetFormatSpecifier(_symbols[0]);
 
+            lbl_gb1_Symbol.Text = _symbols[0];
             lbl_gb1_Bid.Text = output.Bid.ToString(specifier);
             lbl_gb1_Ask.Text = output.Ask.ToString(specifier);
             lbl_gb1_Spread.Text = output.Spread.ToString();
@@ -232,11 +229,29 @@ public partial class LivePrices : Form
         {
             string specifier = GetFormatSpecifier(_symbols[1]);
 
+            lbl_gb2_Symbol.Text = _symbols[1];
             lbl_gb2_Bid.Text = output.Bid.ToString(specifier);
             lbl_gb2_Ask.Text = output.Ask.ToString(specifier);
             lbl_gb2_Spread.Text = output.Spread.ToString();
             lbl_gb2_Volume.Text = output.Volume.ToString();
         }
+    }
+
+    private void SetLabelsToDefaults()
+    {
+        // Labels in Groupbox 1
+        lbl_gb1_Symbol.Text = "------";
+        lbl_gb1_Bid.Text = "0.00000";
+        lbl_gb1_Ask.Text = "0.00000";
+        lbl_gb1_Spread.Text = "0";
+        lbl_gb1_Volume.Text = "0.00";
+
+        // Labels in Groupbox 2
+        lbl_gb2_Symbol.Text = "------";
+        lbl_gb2_Bid.Text = "0.00000";
+        lbl_gb2_Ask.Text = "0.00000";
+        lbl_gb2_Spread.Text = "0";
+        lbl_gb2_Volume.Text = "0.00";
     }
 
     // not exhaustive/accurate for all symbols 
