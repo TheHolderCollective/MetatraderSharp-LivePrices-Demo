@@ -38,15 +38,7 @@ public partial class SymbolSelectForm : Form
         Symbol1 = (string)cbx_Symbol1.SelectedItem;
         Symbol2 = (string)cbx_Symbol2.SelectedItem;
 
-        if (Symbol1 is not null && Symbol2 is not null)
-        {
-            SymbolSelectionsOk = true;
-        }
-        else
-        {
-            SymbolSelectionsOk = false;
-        }
-
+        SymbolSelectionsOk = (Symbol1 is not null && Symbol2 is not null);
         OkClicked = true;
         Close();
     }
