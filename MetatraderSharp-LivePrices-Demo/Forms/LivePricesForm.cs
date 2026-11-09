@@ -1,5 +1,6 @@
 using LivePrices.Models;
 using LivePrices.SharedData;
+using LivePrices.Utilities;
 using MetatraderSharp;
 using MetatraderSharp.Extensions;
 using MetatraderSharp.MetatraderClient;
@@ -217,7 +218,7 @@ public partial class LivePrices : Form
     {
         if (output.Symbol == _symbols[0])
         {
-            string specifier = GetFormatSpecifier(_symbols[0]);
+            string specifier = SymbolUtilities.GetFormatSpecifier(_symbols[0]);
 
             lbl_gb1_Symbol.Text = _symbols[0];
             lbl_gb1_Bid.Text = output.Bid.ToString(specifier);
@@ -227,7 +228,7 @@ public partial class LivePrices : Form
         }
         if (output.Symbol == _symbols[1])
         {
-            string specifier = GetFormatSpecifier(_symbols[1]);
+            string specifier = SymbolUtilities.GetFormatSpecifier(_symbols[1]);
 
             lbl_gb2_Symbol.Text = _symbols[1];
             lbl_gb2_Bid.Text = output.Bid.ToString(specifier);
@@ -252,26 +253,5 @@ public partial class LivePrices : Form
         lbl_gb2_Ask.Text = "0.00000";
         lbl_gb2_Spread.Text = "0";
         lbl_gb2_Volume.Text = "0.00";
-    }
-
-    // not exhaustive/accurate for all symbols 
-    private static string GetFormatSpecifier(string symbol)
-    {
-        if (symbol.Contains("JPY"))
-        {
-            return "N3";
-        }
-        else if (symbol.Contains("BTC-JPY"))
-        {
-            return "N1";
-        }
-        else if (symbol.Contains("BTCUSD"))
-        {
-            return "N2";
-        }
-        else
-        {
-            return "N5";
-        }
     }
 }
