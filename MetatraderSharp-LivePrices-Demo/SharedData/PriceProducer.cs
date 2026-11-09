@@ -2,16 +2,17 @@
 using Newtonsoft.Json;
 using System.Net.WebSockets;
 using System.Text;
+using System.Collections.Concurrent;
 
 namespace LivePrices.SharedData;
 
 public class PriceProducer
 {
-    private volatile BlockingQueue<TrackPrices> _outputQueue;
+    private volatile BlockingCollection<TrackPrices> _outputQueue;
     private ClientWebSocket _webSocket;
     private bool keepProducing;
 
-    public PriceProducer(BlockingQueue<TrackPrices> outputPipe, ClientWebSocket socket)
+    public PriceProducer(BlockingCollection<TrackPrices> outputPipe, ClientWebSocket socket)
     {
         _outputQueue = outputPipe;
         _webSocket = socket;
@@ -48,7 +49,7 @@ public class PriceProducer
                     var output = JsonConvert.DeserializeObject<TrackPrices>(jsonData);
 
                     if (output is not null)
-                        _outputQueue.Enqueue((TrackPrices)output);
+                        _outputQueue.Add((TrackPrices)output);
 
                 }
             }

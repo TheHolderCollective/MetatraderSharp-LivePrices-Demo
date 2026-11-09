@@ -1,15 +1,16 @@
 ﻿using LivePrices.Models;
 using MetatraderSharp.MTsocketAPI.Responses.Common;
+using System.Collections.Concurrent;
 
 namespace LivePrices.SharedData;
 
 public class PriceFilter
 {
-    private volatile BlockingQueue<TrackPrices> _inputQueue;
-    private volatile BlockingQueue<PriceInfo> _outputQueue;
+    private volatile BlockingCollection<TrackPrices> _inputQueue;
+    private volatile BlockingCollection<PriceInfo> _outputQueue;
     private bool _keepFiltering;
 
-    public PriceFilter(BlockingQueue<TrackPrices> inputPipe, BlockingQueue<PriceInfo> outputPipe)
+    public PriceFilter(BlockingCollection<TrackPrices> inputPipe, BlockingCollection<PriceInfo> outputPipe)
     {
         _inputQueue = inputPipe;
         _outputQueue = outputPipe;
@@ -32,8 +33,8 @@ public class PriceFilter
     {
         while (_keepFiltering)
         {
-            TrackPrices price = _inputQueue.Dequeue();
-            _outputQueue.Enqueue(new PriceInfo(price));
+            TrackPrices price = _inputQueue.Take();
+            _outputQueue.Add(new PriceInfo(price));
         }
     }
 }

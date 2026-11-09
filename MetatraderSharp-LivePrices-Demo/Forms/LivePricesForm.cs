@@ -7,6 +7,7 @@ using MetatraderSharp.MetatraderClient;
 using MetatraderSharp.MTsocketAPI.Responses.Common;
 using System.Globalization;
 using System.Net.WebSockets;
+using System.Collections.Concurrent;
 
 namespace LivePrices;
 
@@ -17,8 +18,8 @@ public partial class LivePrices : Form
     private PriceProducer _priceProducer;
     private PriceFilter _priceFilter;
     private PriceConsumer<PriceInfo> _priceConsumer;
-    private BlockingQueue<TrackPrices> _producerOutputPipe;
-    private BlockingQueue<PriceInfo> _filterOuputPipe;
+    private BlockingCollection<TrackPrices> _producerOutputPipe;
+    private BlockingCollection<PriceInfo> _filterOuputPipe;
     private ClientWebSocket _webSocket;
     private bool _trackingStarted;
     private string[] _symbols;
@@ -154,7 +155,7 @@ public partial class LivePrices : Form
 
         _trackResponse = await _mtClient.TrackPricesAsync(TrackingCommand.Start, symbols);
 
-        if (_trackResponse.SuccessCount() == _symbols.Length && _trackResponse.ErrorID == 0)
+        if (_trackResponse.SuccessCount() == symbols.Length && _trackResponse.ErrorID == 0)
         {
             _webSocket = new ClientWebSocket();
             await _webSocket.ConnectAsync(new Uri($"ws://127.0.0.1:{_mtClient.WebSocketPort}"), CancellationToken.None);

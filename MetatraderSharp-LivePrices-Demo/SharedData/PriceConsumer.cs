@@ -1,14 +1,16 @@
-﻿namespace LivePrices.SharedData;
+﻿using System.Collections.Concurrent;
+
+namespace LivePrices.SharedData;
 
 public delegate void PricesOutput<T>(T obj);
 
 public class PriceConsumer<T>
 {
-    private volatile BlockingQueue<T> _inputQueue;
+    private volatile BlockingCollection<T> _inputQueue;
     private bool _keepConsuming;
     private PricesOutput<T> _outputMethod;
 
-    public PriceConsumer(BlockingQueue<T> inputPipe, PricesOutput<T> pricesOutputMethod)
+    public PriceConsumer(BlockingCollection<T> inputPipe, PricesOutput<T> pricesOutputMethod)
     {
         _inputQueue = inputPipe;
         _keepConsuming = true;
@@ -31,7 +33,7 @@ public class PriceConsumer<T>
     {
         while (_keepConsuming)
         {
-            T price = _inputQueue.Dequeue();
+            T price = _inputQueue.Take();
             _outputMethod(price);
         }
     }
