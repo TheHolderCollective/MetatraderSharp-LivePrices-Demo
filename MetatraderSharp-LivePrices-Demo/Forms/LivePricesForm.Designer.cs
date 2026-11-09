@@ -511,7 +511,7 @@
             btn_StartTracking.TabIndex = 1;
             btn_StartTracking.Text = "Start Tracking";
             btn_StartTracking.UseVisualStyleBackColor = true;
-            btn_StartTracking.Click += button1_Click;
+            btn_StartTracking.Click += btn_StartTracking_Click;
             // 
             // btn_StopTracking
             // 
@@ -521,7 +521,7 @@
             btn_StopTracking.TabIndex = 1;
             btn_StopTracking.Text = "Stop Tracking";
             btn_StopTracking.UseVisualStyleBackColor = true;
-            btn_StopTracking.Click += button2_Click;
+            btn_StopTracking.Click += btn_StopTracking_Click;
             // 
             // btn_ResetClient
             // 
@@ -531,7 +531,7 @@
             btn_ResetClient.TabIndex = 1;
             btn_ResetClient.Text = "Reset Client";
             btn_ResetClient.UseVisualStyleBackColor = true;
-            btn_ResetClient.Click += button3_Click;
+            btn_ResetClient.Click += btn_ResetClient_Click;
             // 
             // LivePrices
             // 

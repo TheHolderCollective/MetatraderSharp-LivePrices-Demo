@@ -1,218 +1,81 @@
 using LivePrices.Models;
-using LivePrices.SharedData;
 using LivePrices.Utilities;
-using MetatraderSharp;
 using MetatraderSharp.Extensions;
-using MetatraderSharp.MetatraderClient;
-using MetatraderSharp.MTsocketAPI.Responses.Common;
 using System.Globalization;
-using System.Net.WebSockets;
-using System.Collections.Concurrent;
 
 namespace LivePrices;
 
 public partial class LivePrices : Form
 {
-    private MT4Client _mtClient;
-    private TrackResponse _trackResponse;
-    private PriceProducer _priceProducer;
-    private PriceFilter _priceFilter;
-    private PriceConsumer<PriceInfo> _priceConsumer;
-    private BlockingCollection<TrackPrices> _producerOutputPipe;
-    private BlockingCollection<PriceInfo> _filterOuputPipe;
-    private ClientWebSocket _webSocket;
-    private bool _trackingStarted;
+    private PriceTracker _priceTracker;
+    private string _outputMessage;
     private string[] _symbols;
 
     public LivePrices()
     {
-        if (!CultureInfo.CurrentCulture.Name.Equals("en-US"))
-            CultureInfo.CurrentCulture = new CultureInfo("en-US");
-
         InitializeComponent();
         SetLabelsToDefaults();
+        SetCultureToUS();
 
-        _mtClient = new();
-        _webSocket = new ClientWebSocket();
-        _producerOutputPipe = new();
-        _filterOuputPipe = new();
+        _priceTracker = new(OutputToLabels);
         _symbols = new string[2];
+        _outputMessage = string.Empty;
     }
 
     private async void LivePrices_FormClosing(object sender, FormClosingEventArgs e)
     {
-        if (_trackingStarted)
-            await StopTrackingPrices();
+        if (_priceTracker.TrackingStarted)
+            await _priceTracker.StopTrackingPrices();
     }
 
-    private async void button1_Click(object sender, EventArgs e)
+    private async void btn_StartTracking_Click(object sender, EventArgs e)
     {
-        await StartTracking();
-    }
-
-    private async void button2_Click(object sender, EventArgs e)
-    {
-        await StopTracking();
-    }
-
-    private void button3_Click(object sender, EventArgs e)
-    {
-        ResetClient();
-    }
-
-    private async Task StartTracking()
-    {
-        string outputMessage = string.Empty;
-
-        if (_mtClient.ClientStatusIsError())
+        if (_priceTracker.IsTrackingAvailable())
         {
-            outputMessage = "Unable to start tracking. Please check that terminal is running and MTsocketAPI is loaded.";
-        }
-        else if (_mtClient.ClientStatusIsOK() && _trackingStarted)
-        {
-            outputMessage = "Tracking already started.";
-        }
-        else if (_mtClient.ClientStatusIsOK() && !_trackingStarted)
-        {
-            SymbolList symbols = await _mtClient.GetSymbolListAsync();
+            var availableSymbols = await _priceTracker.GetAvailbleSymbols();
 
-            if (symbols.ErrorID == 0)
+            var symbolSelectForm = new SymbolSelectForm(availableSymbols.GetSymbolNames());
+            symbolSelectForm.ShowDialog();
+
+            if (symbolSelectForm.OkClicked && symbolSelectForm.SymbolSelectionsOk)
             {
-                var symbolSelectForm = new SymbolSelectForm(symbols.GetSymbolNames());
-                symbolSelectForm.ShowDialog();
+                _symbols[0] = symbolSelectForm.Symbol1;
+                _symbols[1] = symbolSelectForm.Symbol2;
 
-                if (symbolSelectForm.OkClicked)
-                {
-                    if (symbolSelectForm.Symbol1 is not null && symbolSelectForm.Symbol2 is not null)
-                    {
-                        _symbols[0] = symbolSelectForm.Symbol1;
-                        _symbols[1] = symbolSelectForm.Symbol2;
-
-                        outputMessage = await StartTrackingPrices(_symbols);
-                    }
-                    else
-                    {
-                        outputMessage = "Invalid symbol selections.Unable to start tracking.";
-                    }
-                }
-                else if (symbolSelectForm.CancelClicked)
-                {
-                    outputMessage = "Start tracking cancelled.";
-                }
+                _outputMessage = await _priceTracker.StartTracking(_symbols);
             }
-            else
+            else if (symbolSelectForm.OkClicked && !symbolSelectForm.SymbolSelectionsOk)
             {
-                outputMessage = "Unable to start tracking. Symbol loading from client failed.";
+                _outputMessage = "Invalid symbol selections.Unable to start tracking.";
+            }
+            else if (symbolSelectForm.CancelClicked)
+            {
+                _outputMessage = "Start tracking cancelled.";
             }
         }
+        else if (_priceTracker.IsTrackingStarted())
+        {
+            _outputMessage = "Tracking already started.";
+        }
+        else if (_priceTracker.IsTerminalClientInErrorState())
+        {
+            _outputMessage = "Unable to start tracking. Please check that terminal is running and MTsocketAPI is loaded.";
+        }
 
-        MessageBox.Show(outputMessage, this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        MessageBox.Show(_outputMessage, this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
-    private async Task StopTracking()
+    private async void btn_StopTracking_Click(object sender, EventArgs e)
     {
-        string outputMessage = string.Empty;
-
-        if (_mtClient.ClientStatusIsError())
-        {
-            outputMessage = "Client is in error state. Unable to stop tracking.";
-        }
-        else if (_mtClient.ClientStatusIsOK() && !_trackingStarted)
-        {
-            outputMessage = "Tracking hasn't started.";
-        }
-        else if (_mtClient.ClientStatusIsOK() && _trackingStarted)
-        {
-            outputMessage = await StopTrackingPrices();
-        }
-
-        MessageBox.Show(outputMessage, this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
-    }
-
-    private void ResetClient()
-    {
-        string outputMessage = string.Empty;
-
-        if (_trackingStarted)
-        {
-            outputMessage = "Unable to reset client while price tracking is in progress.";
-        }
-        else
-        {
-            _mtClient = new();
-            _trackingStarted = false;
-
-            outputMessage = "Client reset.\nStatus after reset: ";
-            outputMessage += _mtClient.ClientStatusIsError() ? "Error" : "Ok";
-        }
-
-        MessageBox.Show(outputMessage, this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
-    }
-
-    private async Task<string> StartTrackingPrices(string[] symbols)
-    {
-        string outputMessage = string.Empty;
-
-        _trackResponse = await _mtClient.TrackPricesAsync(TrackingCommand.Start, symbols);
-
-        if (_trackResponse.SuccessCount() == symbols.Length && _trackResponse.ErrorID == 0)
-        {
-            _webSocket = new ClientWebSocket();
-            await _webSocket.ConnectAsync(new Uri($"ws://127.0.0.1:{_mtClient.WebSocketPort}"), CancellationToken.None);
-
-            if (_webSocket.State == WebSocketState.Open)
-            {
-                _priceProducer = new(_producerOutputPipe, _webSocket);
-                _priceFilter = new(_producerOutputPipe, _filterOuputPipe);
-                _priceConsumer = new(_filterOuputPipe, OutputToLabels);
-
-                _priceProducer.Start();
-                _priceFilter.Start();
-                _priceConsumer.Start();
-
-                _trackingStarted = true;
-                outputMessage = "Tracking succesfully started.";
-            }
-            else
-            {
-                _trackResponse = await _mtClient.TrackPricesAsync(TrackingCommand.Stop);
-                _trackingStarted = false;
-                outputMessage = $"Websocket state: {_webSocket.State}. Websocket unable to connect.";
-            }
-        }
-        else
-        {
-            _trackingStarted = false;
-            outputMessage = $"An error occured: {_trackResponse.ErrorDescription}";
-        }
-
-        return outputMessage;
-    }
-
-    private async Task<string> StopTrackingPrices()
-    {
-        string outputMessage = string.Empty;
-
-        _priceProducer.Stop();
-        _priceFilter.Stop();
-        _priceConsumer.Stop();
-
-        await _webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
-        _trackResponse = await _mtClient.TrackPricesAsync(TrackingCommand.Stop);
-
-        if (_trackResponse.ErrorID == 0)
-        {
-            _trackingStarted = false;
-            outputMessage = "Tracking succesfully stopped.";
-        }
-        else
-        {
-            _trackingStarted = false;
-            outputMessage = $"An error occured: {_trackResponse.ErrorDescription}";
-        }
-
+        _outputMessage = await _priceTracker.StopTracking();
+        MessageBox.Show(_outputMessage, this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
         SetLabelsToDefaults();
-        return outputMessage;
+    }
+
+    private void btn_ResetClient_Click(object sender, EventArgs e)
+    {
+        _outputMessage = _priceTracker.ResetClient();
+        MessageBox.Show(_outputMessage, this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     private void OutputToLabels(PriceInfo output)
@@ -254,5 +117,11 @@ public partial class LivePrices : Form
         lbl_gb2_Ask.Text = "0.00000";
         lbl_gb2_Spread.Text = "0";
         lbl_gb2_Volume.Text = "0.00";
+    }
+
+    private void SetCultureToUS()
+    {
+        if (!CultureInfo.CurrentCulture.Name.Equals("en-US"))
+            CultureInfo.CurrentCulture = new CultureInfo("en-US");
     }
 }
