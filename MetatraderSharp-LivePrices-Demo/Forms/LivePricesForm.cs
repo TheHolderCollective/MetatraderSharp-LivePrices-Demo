@@ -35,16 +35,17 @@ public partial class LivePrices : Form
             var availableSymbols = await _priceTracker.GetAvailbleSymbols();
 
             var symbolSelectForm = new SymbolSelectForm(availableSymbols.GetSymbolNames());
+            symbolSelectForm.StartPosition = FormStartPosition.CenterParent;
             symbolSelectForm.ShowDialog();
 
-            if (symbolSelectForm.OkClicked && symbolSelectForm.SymbolSelectionsOk)
+            if (symbolSelectForm.OkClicked && symbolSelectForm.SymbolSelectionsAreOk)
             {
                 _symbols[0] = symbolSelectForm.Symbol1;
                 _symbols[1] = symbolSelectForm.Symbol2;
 
                 _outputMessage = await _priceTracker.StartTracking(_symbols);
             }
-            else if (symbolSelectForm.OkClicked && !symbolSelectForm.SymbolSelectionsOk)
+            else if (symbolSelectForm.OkClicked && !symbolSelectForm.SymbolSelectionsAreOk)
             {
                 _outputMessage = "Invalid symbol selections.Unable to start tracking.";
             }

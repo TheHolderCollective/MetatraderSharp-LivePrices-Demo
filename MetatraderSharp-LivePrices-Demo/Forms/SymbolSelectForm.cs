@@ -11,7 +11,7 @@ public partial class SymbolSelectForm : Form
     public bool CancelClicked { get; set; }
 
     [DefaultValue(false)]
-    public bool SymbolSelectionsOk { get; set; }
+    public bool SymbolSelectionsAreOk { get; set; }
     
     [DefaultValue("")]
     public string? Symbol1 { get; set; }
@@ -38,7 +38,7 @@ public partial class SymbolSelectForm : Form
         Symbol1 = (string)cbx_Symbol1.SelectedItem;
         Symbol2 = (string)cbx_Symbol2.SelectedItem;
 
-        SymbolSelectionsOk = (Symbol1 is not null && Symbol2 is not null);
+        SymbolSelectionsAreOk = (Symbol1 is not null && Symbol2 is not null);
         OkClicked = true;
         Close();
     }
