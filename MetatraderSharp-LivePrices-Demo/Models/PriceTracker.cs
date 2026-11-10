@@ -20,7 +20,8 @@ public class PriceTracker
     private PricesOutput<PriceInfo> _pricesOutputMethod;
     private ClientWebSocket _webSocket;
     private bool _trackingStarted;
-    
+    private string _outputMessage;
+
     public bool TrackingStarted { get { return _trackingStarted; } }
     
     public PriceTracker(PricesOutput<PriceInfo> outputMethod)
@@ -30,12 +31,11 @@ public class PriceTracker
         _producerOutputPipe = new();
         _filterOuputPipe = new();
         _pricesOutputMethod = outputMethod;
+        _outputMessage = string.Empty;
     }
 
     public async Task<string> StartTracking(string[] symbols)
     {
-        string outputMessage = string.Empty;
-
         _trackResponse = await _mtClient.TrackPricesAsync(TrackingCommand.Start, symbols);
 
         if (_trackResponse.SuccessCount() == symbols.Length && _trackResponse.ErrorID == 0)
@@ -54,68 +54,62 @@ public class PriceTracker
                 _priceConsumer.Start();
 
                 _trackingStarted = true;
-                outputMessage = "Tracking succesfully started.";
+                _outputMessage = "Tracking succesfully started.";
             }
             else
             {
                 _trackResponse = await _mtClient.TrackPricesAsync(TrackingCommand.Stop);
                 _trackingStarted = false;
-                outputMessage = $"Websocket state: {_webSocket.State}. Websocket unable to connect.";
+                _outputMessage = $"Websocket state: {_webSocket.State}. Websocket unable to connect.";
             }
         }
         else
         {
             _trackingStarted = false;
-            outputMessage = $"An error occured: {_trackResponse.ErrorDescription}";
+            _outputMessage = $"An error occured: {_trackResponse.ErrorDescription}";
         }
 
-        return outputMessage;
+        return _outputMessage;
     }
 
     public async Task<string> StopTracking()
     {
-        string outputMessage = string.Empty;
-
         if (_mtClient.ClientStatusIsError())
         {
-            outputMessage = "Client is in error state. Unable to stop tracking.";
+            _outputMessage = "Client is in error state. Unable to stop tracking.";
         }
         else if (_mtClient.ClientStatusIsOK() && !_trackingStarted)
         {
-            outputMessage = "Tracking hasn't started.";
+            _outputMessage = "Tracking hasn't started.";
         }
         else if (_mtClient.ClientStatusIsOK() && _trackingStarted)
         {
-            outputMessage = await StopTrackingPrices();
+            _outputMessage = await StopTrackingPrices();
         }
 
-        return outputMessage;
+        return _outputMessage;
     }
 
     public string ResetClient()
     {
-        string outputMessage = string.Empty;
-
         if (_trackingStarted)
         {
-            outputMessage = "Unable to reset client while price tracking is in progress.";
+            _outputMessage = "Unable to reset client while price tracking is in progress.";
         }
         else
         {
             _mtClient = new();
             _trackingStarted = false;
 
-            outputMessage = "Client reset.\nStatus after reset: ";
-            outputMessage += _mtClient.ClientStatusIsError() ? "Error" : "Ok";
+            _outputMessage = "Client reset.\nStatus after reset: ";
+            _outputMessage += _mtClient.ClientStatusIsError() ? "Error" : "Ok";
         }
 
-        return outputMessage;
+        return _outputMessage;
     }
 
     public async Task<string> StopTrackingPrices()
     {
-        string outputMessage = string.Empty;
-
         _priceProducer.Stop();
         _priceFilter.Stop();
         _priceConsumer.Stop();
@@ -126,15 +120,15 @@ public class PriceTracker
         if (_trackResponse.ErrorID == 0)
         {
             _trackingStarted = false;
-            outputMessage = "Tracking succesfully stopped.";
+            _outputMessage = "Tracking succesfully stopped.";
         }
         else
         {
             _trackingStarted = false;
-            outputMessage = $"An error occured: {_trackResponse.ErrorDescription}";
+            _outputMessage = $"An error occured: {_trackResponse.ErrorDescription}";
         }
 
-        return outputMessage;
+        return _outputMessage;
     }
 
     public async Task<SymbolList> GetAvailbleSymbols()

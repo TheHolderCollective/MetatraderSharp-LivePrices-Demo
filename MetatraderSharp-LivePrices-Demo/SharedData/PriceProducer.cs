@@ -44,13 +44,12 @@ public class PriceProducer
 
                 if (result.MessageType != WebSocketMessageType.Close)
                 {
-                    // process data and output it to the console
+                    // process received and add it to the output queue
                     string jsonData = Encoding.ASCII.GetString(buffer, 0, result.Count);
                     var output = JsonConvert.DeserializeObject<TrackPrices>(jsonData);
 
                     if (output is not null)
                         _outputQueue.Add((TrackPrices)output);
-
                 }
             }
         }
