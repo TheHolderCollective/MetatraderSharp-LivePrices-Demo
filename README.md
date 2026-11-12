@@ -3,7 +3,9 @@
 A demo WinForms app showing how the MetatraderSharp API can be used to stream live prices from a MetaTrader terminal. 
 
 
-https://github.com/user-attachments/assets/d5ef6561-918d-4fd3-9755-eec8ba749bb4
+https://github.com/user-attachments/assets/82bfdb4b-7a51-461e-a627-6326af31349a
+
+
 
 
 ## Usage Requirements
