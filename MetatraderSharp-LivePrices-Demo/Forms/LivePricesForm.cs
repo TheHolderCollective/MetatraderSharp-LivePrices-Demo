@@ -7,6 +7,7 @@ namespace LivePrices;
 
 public partial class LivePrices : Form
 {
+    private readonly string appTitle = "Live Prices";
     private PriceTracker _priceTracker;
     private string _outputMessage;
     private string[] _symbols;
@@ -44,6 +45,7 @@ public partial class LivePrices : Form
                 _symbols[1] = symbolSelectForm.Symbol2;
 
                 _outputMessage = await _priceTracker.StartTracking(_symbols);
+                SetAppTitle();
             }
             else if (symbolSelectForm.OkClicked && !symbolSelectForm.SymbolSelectionsAreOk)
             {
@@ -71,6 +73,7 @@ public partial class LivePrices : Form
         _outputMessage = await _priceTracker.StopTracking();
         MessageBox.Show(_outputMessage, this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
         SetLabelsToDefaults();
+        SetAppTitle();
     }
 
     private void btn_ResetClient_Click(object sender, EventArgs e)
@@ -124,5 +127,10 @@ public partial class LivePrices : Form
     {
         if (!CultureInfo.CurrentCulture.Name.Equals("en-US"))
             CultureInfo.CurrentCulture = new CultureInfo("en-US");
+    }
+
+    private void SetAppTitle()
+    {
+        Text = _priceTracker.TerminalServer != String.Empty ? appTitle + ": " + _priceTracker.TerminalServer : appTitle;
     }
 }

@@ -3,6 +3,7 @@ using MetatraderSharp;
 using MetatraderSharp.Extensions;
 using MetatraderSharp.MetatraderClient;
 using MetatraderSharp.MTsocketAPI.Responses.Common;
+using MetatraderSharp.MTsocketAPI.Responses.MT4;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 
@@ -12,6 +13,7 @@ public class PriceTracker
 {
     private MT4Client _mtClient;
     private TrackResponse _trackResponse;
+    private Account _terminalAccount;
     private PriceProducer _priceProducer;
     private PriceFilter _priceFilter;
     private PriceConsumer<PriceInfo> _priceConsumer;
@@ -21,8 +23,10 @@ public class PriceTracker
     private ClientWebSocket _webSocket;
     private bool _trackingStarted;
     private string _outputMessage;
+    private string _terminalServer;
 
     public bool TrackingStarted { get { return _trackingStarted; } }
+    public string TerminalServer { get { return _terminalServer; } }
     
     public PriceTracker(PricesOutput<PriceInfo> outputMethod)
     { 
@@ -36,6 +40,7 @@ public class PriceTracker
 
     public async Task<string> StartTracking(string[] symbols)
     {
+        _terminalServer = await GetServerName();
         _trackResponse = await _mtClient.TrackPricesAsync(TrackingCommand.Start, symbols);
 
         if (_trackResponse.SuccessCount() == symbols.Length && _trackResponse.ErrorID == 0)
@@ -85,6 +90,7 @@ public class PriceTracker
         else if (_mtClient.ClientStatusIsOK() && _trackingStarted)
         {
             _outputMessage = await StopTrackingPrices();
+            _terminalServer = String.Empty;
         }
 
         return _outputMessage;
@@ -149,5 +155,11 @@ public class PriceTracker
     public bool IsTerminalClientInErrorState()
     {
         return _mtClient.ClientStatusIsError();
+    }
+
+    private async Task<string> GetServerName()
+    {
+        _terminalAccount = await _mtClient.GetAccountInfoAsync();
+        return _terminalAccount.Server ?? String.Empty;
     }
 }
